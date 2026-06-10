@@ -29,6 +29,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [activeChat, setActiveChat] = useState(0);
   const [copiedIdx, setCopiedIdx] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -61,6 +62,7 @@ export default function App() {
     setMessages([]);
     setChatId(null);
     setActiveChat(null);
+    setSidebarOpen(false);
     inputRef.current?.focus();
   };
 
@@ -74,8 +76,16 @@ export default function App() {
 
   return (
     <div style={s.root}>
+      {/* Mobile Menu Overlay */}
+      {sidebarOpen && <div style={s.overlay} onClick={() => setSidebarOpen(false)} />}
+      
+      {/* Mobile Menu Button */}
+      <button style={s.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>
+        ☰
+      </button>
+
       {/* ── SIDEBAR ── */}
-      <aside style={s.sidebar}>
+      <aside style={{ ...s.sidebar, ...(sidebarOpen ? s.sidebarOpen : s.sidebarClosed) }}>
         <div style={s.sbTop}>
           <button style={s.newChatBtn} onClick={newChat}>
             <span style={s.newChatIcon}>✏️</span>
@@ -93,7 +103,12 @@ export default function App() {
                   <button
                     key={item}
                     style={{ ...s.historyItem, ...(activeChat === idx ? s.historyItemActive : {}) }}
-                    onClick={() => { setActiveChat(idx); setMessages([]); setChatId(null); }}
+                    onClick={() => { 
+                      setActiveChat(idx); 
+                      setMessages([]); 
+                      setChatId(null);
+                      setSidebarOpen(false);
+                    }}
                   >
                     💬 {item}
                   </button>
@@ -120,7 +135,7 @@ export default function App() {
         <div style={s.topbar}>
           <div style={s.modelBadge}>
             <span style={s.modelDot} />
-            Chandu Chaiwala ▾
+            <span style={s.modelText}>Chandu Chaiwala ▾</span>
           </div>
           <div style={s.topbarRight}>
             <button style={s.iconBtn} title="Share">↗</button>
@@ -142,8 +157,6 @@ export default function App() {
                     key={sg.title}
                     style={s.suggCard}
                     onClick={() => send(sg.title + " " + sg.sub)}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#b0b0b0")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e5e5")}
                   >
                     <span style={s.suggIcon}>{sg.icon}</span>
                     <p style={s.suggTitle}>{sg.title}</p>
@@ -173,7 +186,7 @@ export default function App() {
                           style={s.actionBtn}
                           onClick={() => copyMsg(i, m.content)}
                         >
-                          {copiedIdx === i ? "✅ Copied" : "📋 Copy"}
+                          {copiedIdx === i ? "✅" : "📋"}
                         </button>
                         <button style={s.actionBtn}>👍</button>
                         <button style={s.actionBtn}>👎</button>
@@ -243,12 +256,24 @@ export default function App() {
           0%, 80%, 100% { opacity: 0.15; transform: scale(0.85); }
           40% { opacity: 1; transform: scale(1); }
         }
+        
+        @media (max-width: 768px) {
+          .scroll-container {
+            padding: 0 12px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          textarea {
+            font-size: 16px !important;
+          }
+        }
       `}</style>
     </div>
   );
 }
 
-/* ── STYLES ── */
+/* ── RESPONSIVE STYLES ── */
 const s = {
   root: {
     display: "flex",
@@ -256,16 +281,71 @@ const s = {
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     background: "#f9f9f9",
     color: "#111",
+    position: "relative",
+  },
+
+  /* Mobile Menu Button */
+  menuBtn: {
+    position: "fixed",
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    border: "1px solid #e5e5e5",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: 20,
+    zIndex: 1000,
+    display: "none",
+    "@media (max-width: 768px)": {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  },
+
+  /* Overlay */
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    zIndex: 998,
+    "@media (min-width: 769px)": {
+      display: "none",
+    },
   },
 
   /* Sidebar */
   sidebar: {
-    width: 240,
+    width: 260,
     flexShrink: 0,
     background: "#f0f0f0",
     display: "flex",
     flexDirection: "column",
     borderRight: "1px solid #e5e5e5",
+    transition: "transform 0.3s ease",
+    zIndex: 999,
+    "@media (max-width: 768px)": {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      height: "100%",
+      transform: "translateX(-100%)",
+    },
+  },
+  sidebarOpen: {
+    "@media (max-width: 768px)": {
+      transform: "translateX(0)",
+    },
+  },
+  sidebarClosed: {
+    "@media (max-width: 768px)": {
+      transform: "translateX(-100%)",
+    },
   },
   sbTop: {
     padding: "12px 10px",
@@ -359,10 +439,13 @@ const s = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 20px",
+    padding: "0 16px",
     height: 52,
     borderBottom: "1px solid #f0f0f0",
     flexShrink: 0,
+    "@media (max-width: 768px)": {
+      padding: "0 12px",
+    },
   },
   modelBadge: {
     display: "flex",
@@ -375,6 +458,15 @@ const s = {
     fontWeight: 500,
     cursor: "pointer",
     color: "#111",
+    "@media (max-width: 480px)": {
+      padding: "5px 8px",
+      fontSize: 11,
+    },
+  },
+  modelText: {
+    "@media (max-width: 480px)": {
+      display: "none",
+    },
   },
   modelDot: {
     width: 7,
@@ -393,13 +485,18 @@ const s = {
     cursor: "pointer",
     fontSize: 14,
     color: "#666",
+    "@media (max-width: 480px)": {
+      width: 28,
+      height: 28,
+      fontSize: 12,
+    },
   },
 
   /* Chat area */
   chatArea: {
     flex: 1,
     overflowY: "auto",
-    padding: "24px 0",
+    padding: "20px 0",
   },
 
   /* Empty state */
@@ -408,7 +505,7 @@ const s = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: "60px 24px 24px",
+    padding: "40px 16px 24px",
     gap: 12,
     minHeight: "100%",
   },
@@ -417,24 +514,28 @@ const s = {
     marginBottom: 4,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: "clamp(18px, 5vw, 20px)",
     fontWeight: 600,
     color: "#111",
     margin: 0,
   },
   emptySub: {
-    fontSize: 14,
+    fontSize: "clamp(12px, 4vw, 14px)",
     color: "#888",
     margin: 0,
     textAlign: "center",
   },
   suggGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
     gap: 10,
     width: "100%",
     maxWidth: 500,
     marginTop: 8,
+    "@media (max-width: 480px)": {
+      gridTemplateColumns: "1fr",
+      gap: 8,
+    },
   },
   suggCard: {
     textAlign: "left",
@@ -444,6 +545,9 @@ const s = {
     background: "#fff",
     cursor: "pointer",
     transition: "border-color 0.15s",
+    "@media (max-width: 480px)": {
+      padding: "10px 12px",
+    },
   },
   suggIcon: { fontSize: 18, display: "block", marginBottom: 5 },
   suggTitle: { fontSize: 13, fontWeight: 500, color: "#111", margin: 0, marginBottom: 2 },
@@ -454,10 +558,13 @@ const s = {
     display: "flex",
     flexDirection: "column",
     gap: 4,
-    padding: "0 20px",
+    padding: "0 16px",
     maxWidth: 760,
     margin: "0 auto",
     width: "100%",
+    "@media (max-width: 768px)": {
+      padding: "0 12px",
+    },
   },
   userMsgWrap: {
     display: "flex",
@@ -465,16 +572,20 @@ const s = {
     alignItems: "flex-start",
     gap: 10,
     padding: "10px 0",
+    "@media (max-width: 480px)": {
+      gap: 6,
+    },
   },
   userBubble: {
     background: "#f3f4f6",
     borderRadius: "14px 14px 4px 14px",
     padding: "10px 14px",
-    fontSize: 14,
+    fontSize: "clamp(13px, 4vw, 14px)",
     lineHeight: 1.6,
     color: "#111",
-    maxWidth: 480,
+    maxWidth: "min(480px, 70%)",
     whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
   },
   userAvatar: {
     width: 28,
@@ -489,12 +600,20 @@ const s = {
     justifyContent: "center",
     flexShrink: 0,
     marginTop: 2,
+    "@media (max-width: 480px)": {
+      width: 24,
+      height: 24,
+      fontSize: 9,
+    },
   },
   aiMsgWrap: {
     display: "flex",
     alignItems: "flex-start",
     gap: 10,
     padding: "10px 0",
+    "@media (max-width: 480px)": {
+      gap: 6,
+    },
   },
   aiAvatar: {
     width: 28,
@@ -508,22 +627,29 @@ const s = {
     flexShrink: 0,
     marginTop: 2,
     border: "1px solid #e5e5e5",
+    "@media (max-width: 480px)": {
+      width: 24,
+      height: 24,
+      fontSize: 13,
+    },
   },
   aiMsgBody: {
     flex: 1,
-    maxWidth: 600,
+    maxWidth: "min(600px, 70%)",
   },
   aiText: {
-    fontSize: 14,
+    fontSize: "clamp(13px, 4vw, 14px)",
     lineHeight: 1.7,
     color: "#111",
     margin: 0,
     whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
   },
   msgActions: {
     display: "flex",
     gap: 4,
     marginTop: 8,
+    flexWrap: "wrap",
   },
   actionBtn: {
     padding: "3px 9px",
@@ -533,6 +659,10 @@ const s = {
     fontSize: 12,
     color: "#666",
     cursor: "pointer",
+    "@media (max-width: 480px)": {
+      padding: "2px 7px",
+      fontSize: 11,
+    },
   },
 
   /* Typing dots */
@@ -552,11 +682,14 @@ const s = {
 
   /* Input */
   inputArea: {
-    padding: "10px 20px 18px",
+    padding: "10px 16px 18px",
     flexShrink: 0,
     maxWidth: 760,
     margin: "0 auto",
     width: "100%",
+    "@media (max-width: 768px)": {
+      padding: "10px 12px 18px",
+    },
   },
   inputBox: {
     display: "flex",
@@ -572,7 +705,7 @@ const s = {
     border: "none",
     background: "transparent",
     resize: "none",
-    fontSize: 14,
+    fontSize: "clamp(13px, 4vw, 14px)",
     color: "#111",
     fontFamily: "inherit",
     outline: "none",
@@ -595,9 +728,14 @@ const s = {
     alignItems: "center",
     justifyContent: "center",
     transition: "opacity 0.15s",
+    "@media (max-width: 480px)": {
+      width: 28,
+      height: 28,
+      fontSize: 14,
+    },
   },
   inputHint: {
-    fontSize: 11.5,
+    fontSize: "clamp(10px, 3.5vw, 11.5px)",
     color: "#bbb",
     textAlign: "center",
     marginTop: 7,
